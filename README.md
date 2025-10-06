@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# S3 Multipart Upload Frontend
+
+A Next.js application to test your S3 multipart upload backend with a beautiful UI.
+
+## Features
+
+- ✨ Beautiful, modern UI built with Tailwind CSS
+- 📤 Multipart file upload with progress tracking
+- 🔄 Real-time upload status updates
+- 📊 Detailed upload session information
+- 🎨 Dark mode support
+- 📱 Responsive design
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Make sure your backend is running on `http://localhost:3001`
+
+### Run the Frontend
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## How It Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The frontend implements a complete multipart upload flow:
 
-## Learn More
+1. **Select a File**: Choose any file to upload
+2. **Create Multipart Upload**: Calls `POST /create-multipart` to initialize the upload session
+3. **Get Presigned URLs**: Calls `POST /create-presigned-urls` to get upload URLs for each part
+4. **Upload Parts**: Uploads file chunks (5MB each) to S3 using presigned URLs
+5. **Complete Upload**: Calls `POST /complete-multipart` to finalize the upload
 
-To learn more about Next.js, take a look at the following resources:
+## File Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/
+│   ├── page.js              # Main page with upload UI
+│   ├── components/
+│   │   └── FileUpload.js    # Upload component with full multipart logic
+│   ├── globals.css          # Global styles
+│   └── layout.js            # Root layout
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Configuration
 
-## Deploy on Vercel
+- **Backend URL**: `http://localhost:3001` (configured in `FileUpload.js`)
+- **Chunk Size**: 5MB (configurable in `FileUpload.js`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Endpoints Used
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/create-multipart` | Initialize multipart upload |
+| POST | `/create-presigned-urls` | Get presigned URLs for parts |
+| POST | `/complete-multipart` | Complete the upload |
