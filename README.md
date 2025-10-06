@@ -5,9 +5,11 @@ A Next.js application to test your S3 multipart upload backend with a beautiful 
 ## Features
 
 - ✨ Beautiful, modern UI built with Tailwind CSS
-- 📤 Multipart file upload with progress tracking
-- 🔄 Real-time upload status updates
+- 📤 Multipart file upload with **part-by-part progress tracking**
+- 🔄 Real-time upload status updates with individual part percentages
 - 📊 Detailed upload session information
+- 🎯 Visual status indicators for each part (completed ✓, uploading ↓, pending ○)
+- 📈 Individual progress bars for each 5MB chunk
 - 🎨 Dark mode support
 - 📱 Responsive design
 

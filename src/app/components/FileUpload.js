@@ -97,12 +97,13 @@ export default function FileUpload() {
       });
       setPartProgress(initialPartProgress);
 
-      // Step 3: Upload each part
-      setStatus('Uploading file parts...');
+      // Step 3: Upload all parts in parallel
+      setStatus(`Uploading ${numParts} parts in parallel...`);
       const uploadedParts = [];
+      let completedCount = 0;
 
-      for (let i = 0; i < presignedUrls.length; i++) {
-        const { partNumber, url } = presignedUrls[i];
+      // Create upload function for a single part
+      const uploadPart = (partNumber, url) => {
         const start = (partNumber - 1) * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const blob = file.slice(start, end);
@@ -112,10 +113,7 @@ export default function FileUpload() {
           p.partNumber === partNumber ? { ...p, status: 'uploading', progress: 0 } : p
         ));
 
-        setStatus(`Uploading part ${partNumber} of ${numParts}...`);
-
-        // Create XMLHttpRequest for progress tracking
-        await new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           
           xhr.upload.addEventListener('progress', (e) => {
@@ -140,7 +138,12 @@ export default function FileUpload() {
                 p.partNumber === partNumber ? { ...p, status: 'completed', progress: 100 } : p
               ));
 
-              resolve();
+              // Update overall progress
+              completedCount++;
+              setProgress(Math.round((completedCount / numParts) * 100));
+              setStatus(`Uploading parts... ${completedCount} of ${numParts} completed`);
+
+              resolve({ partNumber, etag });
             } else {
               reject(new Error(`Failed to upload part ${partNumber}`));
             }
@@ -153,9 +156,17 @@ export default function FileUpload() {
           xhr.open('PUT', url);
           xhr.send(blob);
         });
+      };
 
-        setProgress(Math.round(((i + 1) / numParts) * 100));
-      }
+      // Upload all parts in parallel
+      const uploadPromises = presignedUrls.map(({ partNumber, url }) => 
+        uploadPart(partNumber, url)
+      );
+
+      await Promise.all(uploadPromises);
+
+      // Sort parts by PartNumber before completing (S3 requires them in order)
+      uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
 
       // Step 4: Complete multipart upload
       setStatus('Completing upload...');
@@ -172,7 +183,8 @@ export default function FileUpload() {
       });
 
       if (!completeResponse.ok) {
-        throw new Error('Failed to complete multipart upload');
+        const errorData = await completeResponse.json();
+        throw new Error(errorData.error || 'Failed to complete multipart upload');
       }
 
       const { message, location } = await completeResponse.json();
